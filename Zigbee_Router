@@ -7,7 +7,7 @@
 LiquidCrystal_I2C lcd(0x3F, 16, 2);
 
 SoftwareSerial mySerial(RxD,TxD); // RX, TX
-int i=0;
+
 void setup() {
     Serial.begin(9600);
     pinMode(RxD, INPUT);
@@ -23,17 +23,15 @@ void loop() {
     if (mySerial.available()) {                   //ฝั่งรับ    
         char incoming  = mySerial.read();
         Serial.print(incoming);
-        String a = a + incoming;                  //แสดงบนจอ lcd
-        lcd.print(incoming);
-        i++;
-        if(i==17){
-          lcd.clear();                            //ล้างจอ lcd เมื่อตัวอักษรเต็มหน้าจอ
-          i=0;}
-       
-
-        
+        String a = a + incoming;                 //นำตัวอักษรที่ได้รับมาเรียงต่อกัน 
+        lcd.print(incoming);                     //แสดงบนจอ lcd
  
     }
+    else if(mySerial.available()==0){             //ตรวจสอบว่ามีข้อมูลส่งมาหรือเปล่า
+      delay(3000);                                // หน่วงเวลา3วิ
+      lcd.clear();                                //ล้างจอแสดงผล LCD
+      }
+    
     if (Serial.available()) {                     //ฝั่งส่ง
         char incoming_2  = Serial.read();
         mySerial.println(incoming_2);
