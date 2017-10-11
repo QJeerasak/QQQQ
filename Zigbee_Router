@@ -19,32 +19,54 @@ double Thermister(int RawADC) {
 
 /* -------------------------------------------*/
 
+int LED_Pin = 13;
+String SerialGET = "";
+double Temperature =0;
 void setup() {
     Serial.begin(9600);
     pinMode(RxD, INPUT);
     pinMode(TxD, OUTPUT);
     mySerial.begin(9600);
     lcd.begin();
+    pinMode(LED_Pin, OUTPUT);
+
+    
    
 }
  
 void loop() {
 
   /* KY-013 ANALOG TEMPERATURE SENSOR MODULE */
+   /*Serial.print("Temperature : ");
    Serial.print(Thermister(analogRead(0))); //read pin A0
-   Serial.println("c");
-   mySerial.print(Thermister(analogRead(0)));
+   Serial.println("c");*/
+   
+    
+   if (Temperature - Thermister(analogRead(0)) != 0){
+   Temperature = Thermister(analogRead(0));
+   mySerial.print("Temperature : ");
+   mySerial.print(Temperature);
    mySerial.println("c");
-   delay(500);
+   
+   }
  /*---------------------------------------------*/
 
   
-    if (mySerial.available()) {                   //ฝั่งรับ    
+    while (mySerial.available()) {                   //ฝั่งรับ    
         char incoming  = mySerial.read();
         Serial.print(incoming);
         lcd.print(incoming);                     //แสดงบนจอ lcd
- 
-    }    
+        if (incoming == '\n'){
+        if (SerialGET == "1"){
+          
+          digitalWrite(LED_Pin,HIGH);
+          SerialGET = "";  
+          }else{
+            digitalWrite(LED_Pin,LOW);
+            SerialGET = "";}
+        }else SerialGET += incoming;
+        }
+            
 
-
+delay(500);
 }
