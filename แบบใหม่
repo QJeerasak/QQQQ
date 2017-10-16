@@ -55,7 +55,8 @@ void loop() {
               }else {
               delay(3000);
               SerialGET.setCharAt(0,'2');
-              mySerial.print(SerialGET); //ทำไมไม่ส่งข้อมูล ??
+              mySerial.print(SerialGET); 
+              mySerial.print('\n');         //enter
               Serial.print("ทำการส่งต่อแล้ว :");
               Serial.println(SerialGET);
               SerialGET = "";
