@@ -20,7 +20,9 @@ double Thermister(int RawADC) {
 /* -------------------------------------------*/
 
 String SerialGET = "";
-boolean A = true;
+unsigned long previousMillis=0;
+int interval=7000;
+String r3mac;
 
 void setup() {
     Serial.begin(9600);
@@ -28,10 +30,24 @@ void setup() {
     pinMode(TxD, OUTPUT);
     mySerial.begin(9600);
     lcd.begin();
+
+    r3mac = String();
    
 }
  
 void loop() {
+
+  unsigned long currentMillis = millis();
+  delay(1000);
+  if ((unsigned long)(currentMillis - previousMillis) >= interval) {
+      String sensor = "ส่งค่า Sensor ของ R3";
+      r3mac = String(31 + sensor);
+      mySerial.print(r3mac);
+      mySerial.print('\n');
+      delay(2000);
+      previousMillis = currentMillis;
+   }
+  
 
   /* KY-013 ANALOG TEMPERATURE SENSOR MODULE */
   /* Serial.print(Thermister(analogRead(0))); //read pin A0
