@@ -20,17 +20,33 @@ double Thermister(int RawADC) {
 /* -------------------------------------------*/
 
 String SerialGET = "";
-
+unsigned long previousMillis=0;
+int interval=5000;
+String r2mac;
 void setup() {
     Serial.begin(9600);
     pinMode(RxD, INPUT);
     pinMode(TxD, OUTPUT);
     mySerial.begin(9600);
     lcd.begin();
-   
+
+    r2mac = String();
 }
  
 void loop() {
+  
+  unsigned long currentMillis = millis();
+  delay(1000);
+  if ((unsigned long)(currentMillis - previousMillis) >= interval) {
+      String sensor = "ส่งค่า Sensor ของ R2";
+      r2mac = String(21 + sensor);
+      mySerial.print(r2mac);
+      mySerial.print('\n');
+      delay(2000);
+      previousMillis = currentMillis;
+   }
+
+  
 
   /* KY-013 ANALOG TEMPERATURE SENSOR MODULE */
   /* Serial.print(Thermister(analogRead(0))); //read pin A0
@@ -55,16 +71,16 @@ void loop() {
           if (SerialGET.substring(0,1) == "1"){  
            if(SerialGET.substring(1,2) == "1") {}
               else {
-              SerialGET.setCharAt(0,'2');
+              SerialGET.setCharAt(0,'2');     // ส่งข้อมูลไป -->
               mySerial.print(SerialGET);
               mySerial.print('\n');
               Serial.print("ทำการส่งต่อแล้ว :");
               Serial.println(SerialGET);
               }
           }
-          if (SerialGET.substring(0,1) == "3"){
+          if (SerialGET.substring(0,1) == "3"){   
             if(SerialGET.substring(1,2) == "1"){
-              SerialGET.setCharAt(0,'2');
+              SerialGET.setCharAt(0,'2');     // ส่งข้อมูลกลับ <--
               mySerial.print(SerialGET);
               mySerial.print('\n');
               Serial.print("ทำการส่งต่อแล้ว :");
