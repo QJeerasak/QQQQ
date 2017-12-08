@@ -1,0 +1,102 @@
+#include <SoftwareSerial.h>
+#define RxD 2
+#define TxD 3
+
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x3F, 16, 2);
+
+SoftwareSerial mySerial(RxD,TxD); // RX, TX
+
+int val = 0; //value for storing moisture value 
+int soilPin = A0;//Declare a variable for the soil moisture sensor 
+int soilPower = 7;//Variable for Soil moisture Power
+
+String SerialGET = "";
+unsigned long previousMillis=0;
+int interval=7000;
+String r3mac;
+
+void setup() {
+    Serial.begin(9600);
+    pinMode(RxD, INPUT);
+    pinMode(TxD, OUTPUT);
+    mySerial.begin(9600);
+    lcd.begin();
+
+    r3mac = String();
+
+    pinMode(soilPower, OUTPUT);//Set D7 as an OUTPUT
+    digitalWrite(soilPower, LOW);//Set to LOW so no power is flowing through the sensor
+   
+}
+ 
+void loop() {
+
+  unsigned long currentMillis = millis();
+  delay(1000);
+  if(currentMillis >= 86400000) {software_Reset() ;} // นับครบ 1วัน reset ค่า
+  if ((unsigned long)(currentMillis - previousMillis) >= interval) {
+      String sensor = "Soil Moisture = ";
+      int soil = readSoil();
+      r3mac = String(31 + sensor + soil);
+      mySerial.print(r3mac);
+      mySerial.print('\n');
+      previousMillis = currentMillis;
+   }
+    
+    while (mySerial.available()) {                   //ฝั่งรับ    
+        char incoming  = mySerial.read();
+        SerialGET += incoming;
+        if (incoming == '\n'){
+          SerialGET.trim();             
+          Serial.print("รับค่า :");
+          Serial.println(SerialGET);
+          if(SerialGET.substring(0,1) == "2" && SerialGET.substring(1,2) == "3") {
+            Serial.println("ทำงาน");
+            SerialGET = "";
+          }
+          if (SerialGET.substring(0,1) == "2"){  
+           if(SerialGET.substring(1,2) == "1") {}
+              else {
+              SerialGET.setCharAt(0,'3');
+              mySerial.print(SerialGET);
+              mySerial.print('\n');
+              Serial.print("ทำการส่งต่อแล้ว :");
+              Serial.println(SerialGET);
+              }
+          }
+          if (SerialGET.substring(0,1) == "4"){
+            if(SerialGET.substring(1,2) == "1"){
+              SerialGET.setCharAt(0,'3');
+              mySerial.print(SerialGET);
+              mySerial.print('\n');
+              Serial.print("ทำการส่งต่อแล้ว :");
+              Serial.println(SerialGET);
+              }
+            }
+SerialGET = "";
+        }
+        }
+    if (Serial.available()){
+        char incoming2 = Serial.read();
+        mySerial.print(incoming2);
+        
+        }    
+
+
+}
+
+int readSoil()
+{
+    digitalWrite(soilPower, HIGH);//turn D7 "On"
+    delay(10);//wait 10 milliseconds 
+    val = analogRead(soilPin);//Read the SIG value form sensor 
+    digitalWrite(soilPower, LOW);//turn D7 "Off"
+    return val;//send current moisture value
+}
+
+void software_Reset() // Restarts program from beginning but does not reset the peripherals and registers
+{
+asm volatile ("  jmp 0");  
+}  
