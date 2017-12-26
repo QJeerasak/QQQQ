@@ -32,6 +32,9 @@ void loop() {
       r3mac = String(313 + sensor + soil);
       mySerial.print(r3mac);
       mySerial.print('\n');
+      Serial.print("Send : ");
+      Serial.println(r3mac);
+      while(1){}
       previousMillis = currentMillis;
    }
     while (mySerial.available()) {                   //ฝั่งรับ    
@@ -39,10 +42,11 @@ void loop() {
         SerialGET += incoming;
         if (incoming == '\n'){
           SerialGET.trim();             
-          Serial.print("รับค่า :");
-          Serial.println(SerialGET);
+          
           if(SerialGET.substring(0,1) == "2" && SerialGET.substring(1,2) == "3") {
-            Serial.println("ทำงาน");
+            Serial.print("Get :");
+            Serial.println(SerialGET);
+            Serial.println("Active !!");
             SerialGET = "";
           }
           if (SerialGET.substring(0,1) == "2"){  
@@ -51,7 +55,7 @@ void loop() {
               SerialGET.setCharAt(0,'3');
               mySerial.print(SerialGET);
               mySerial.print('\n');
-              Serial.print("ทำการส่งต่อแล้ว :");
+              Serial.print("Forword :");
               Serial.println(SerialGET);
               }
           }
@@ -60,7 +64,7 @@ void loop() {
               SerialGET.setCharAt(0,'3');
               mySerial.print(SerialGET);
               mySerial.print('\n');
-              Serial.print("ทำการส่งต่อแล้ว :");
+              Serial.print("Forword :");
               Serial.println(SerialGET);
               }
             }
