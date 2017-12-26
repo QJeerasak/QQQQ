@@ -36,10 +36,13 @@ void loop() {
         SerialGET += incoming;
         if (incoming == '\n'){
           SerialGET.trim();             
-          Serial.print("รับค่า :");
-          Serial.println(SerialGET);
+          
           if(SerialGET.substring(0,1) == "2" && SerialGET.substring(1,2) == "1") {
-            Serial.println("ทำงาน");
+            SerialGET.remove(0,2);
+            Serial.print("Get :");
+            Serial.println(SerialGET);
+            Serial.println("Active !!");
+            while(1){}
             SerialGET = "";
           }
 SerialGET = "";
