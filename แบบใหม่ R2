@@ -2,23 +2,11 @@
 #define RxD 2
 #define TxD 3
 
-#include <Wire.h>
-#include <LiquidCrystal_I2C.h>
-LiquidCrystal_I2C lcd(0x3F, 16, 2);
-
 SoftwareSerial mySerial(RxD,TxD); // RX, TX
 
-/* KY-013 ANALOG TEMPERATURE SENSOR MODULE */
-double Thermister(int RawADC) {
-  double Temp;
-  Temp = log(((10240000/RawADC) - 10000));
-  Temp = 1 / (0.001129148 + (0.000234125 + (0.0000000876741 * Temp * Temp ))* Temp );
-  Temp = Temp - 273.15; // Convert Kelvin to Celcius
-  return Temp;
-}
-
-/* -------------------------------------------*/
-
+int val = 0; //value for storing moisture value 
+int soilPin = A0;//Declare a variable for the soil moisture sensor 
+int soilPower = 7;//Variable for Soil moisture Power
 String SerialGET = "";
 unsigned long previousMillis=0;
 int interval=5000;
@@ -28,42 +16,29 @@ void setup() {
     pinMode(RxD, INPUT);
     pinMode(TxD, OUTPUT);
     mySerial.begin(9600);
-    lcd.begin();
-
     r2mac = String();
+    pinMode(soilPower, OUTPUT);//Set D7 as an OUTPUT
+    digitalWrite(soilPower, LOW);//Set to LOW so no power is flowing through the sensor
 }
  
 void loop() {
   
   unsigned long currentMillis = millis();
   delay(1000);
+  if(currentMillis >= 86400000) {software_Reset() ;} // นับครบ 1วัน reset ค่า
   if ((unsigned long)(currentMillis - previousMillis) >= interval) {
-      String sensor = "ส่งค่า Sensor ของ R2";
-      r2mac = String(21 + sensor);
+      String sensor = "Soil Moisture = ";
+      int soil = readSoil();
+      r2mac = String(212 + sensor + soil);
       mySerial.print(r2mac);
       mySerial.print('\n');
-      delay(2000);
       previousMillis = currentMillis;
    }
-
-  
-
-  /* KY-013 ANALOG TEMPERATURE SENSOR MODULE */
-  /* Serial.print(Thermister(analogRead(0))); //read pin A0
-   Serial.println("c");
-   mySerial.print(Thermister(analogRead(0)));
-   mySerial.println("c");
-   delay(500);*/
- /*---------------------------------------------*/
-
-  
     while (mySerial.available()) {                   //ฝั่งรับ    
         char incoming  = mySerial.read();
         SerialGET += incoming;
         if (incoming == '\n'){
           SerialGET.trim();             
-          Serial.print("รับค่า :");
-          Serial.println(SerialGET);
           if(SerialGET.substring(0,1) == "1" && SerialGET.substring(1,2) == "2") {
             Serial.println("ทำงาน");
             SerialGET = "";
@@ -74,8 +49,6 @@ void loop() {
               SerialGET.setCharAt(0,'2');     // ส่งข้อมูลไป -->
               mySerial.print(SerialGET);
               mySerial.print('\n');
-              Serial.print("ทำการส่งต่อแล้ว :");
-              Serial.println(SerialGET);
               }
           }
           if (SerialGET.substring(0,1) == "3"){   
@@ -83,8 +56,6 @@ void loop() {
               SerialGET.setCharAt(0,'2');     // ส่งข้อมูลกลับ <--
               mySerial.print(SerialGET);
               mySerial.print('\n');
-              Serial.print("ทำการส่งต่อแล้ว :");
-              Serial.println(SerialGET);
               }
             }
 SerialGET = "";
@@ -93,8 +64,19 @@ SerialGET = "";
     if (Serial.available()){
         char incoming2 = Serial.read();
         mySerial.print(incoming2);
-        
         }    
-
-
 }
+
+int readSoil()
+{
+    digitalWrite(soilPower, HIGH);//turn D7 "On"
+    delay(10);//wait 10 milliseconds 
+    val = analogRead(soilPin);//Read the SIG value form sensor 
+    digitalWrite(soilPower, LOW);//turn D7 "Off"
+    return val;//send current moisture value
+}
+
+void software_Reset() // Restarts program from beginning but does not reset the peripherals and registers
+{
+asm volatile ("  jmp 0");  
+}  
