@@ -30,8 +30,8 @@ void loop() {
       String sensor = "Soil Moisture = ";
       int soil = readSoil();
       r2mac = String(212 + sensor + soil);
-      mySerial.print(r2mac);
-      mySerial.print('\n');
+      //mySerial.print(r2mac);
+      //mySerial.print('\n');
       previousMillis = currentMillis;
    }
     while (mySerial.available()) {                   //ฝั่งรับ    
@@ -40,7 +40,9 @@ void loop() {
         if (incoming == '\n'){
           SerialGET.trim();             
           if(SerialGET.substring(0,1) == "1" && SerialGET.substring(1,2) == "2") {
-            Serial.println("ทำงาน");
+            Serial.print("Get :");
+            Serial.println(SerialGET);
+            Serial.println("Active !!");
             SerialGET = "";
           }
           if (SerialGET.substring(0,1) == "1"){  
@@ -49,6 +51,9 @@ void loop() {
               SerialGET.setCharAt(0,'2');     // ส่งข้อมูลไป -->
               mySerial.print(SerialGET);
               mySerial.print('\n');
+              Serial.print("Forword :");
+              Serial.println(SerialGET);
+              while(1){}
               }
           }
           if (SerialGET.substring(0,1) == "3"){   
@@ -56,6 +61,8 @@ void loop() {
               SerialGET.setCharAt(0,'2');     // ส่งข้อมูลกลับ <--
               mySerial.print(SerialGET);
               mySerial.print('\n');
+              Serial.print("Forword :");
+              Serial.println(SerialGET);
               }
             }
 SerialGET = "";
