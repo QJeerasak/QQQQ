@@ -1,0 +1,93 @@
+#include <SoftwareSerial.h>
+#define RxD 2
+#define TxD 3
+
+SoftwareSerial mySerial(RxD,TxD); // RX, TX
+
+int val = 0; //value for storing moisture value 
+int soilPin = A0;//Declare a variable for the soil moisture sensor 
+int soilPower = 7;//Variable for Soil moisture Power
+String SerialGET = "";
+unsigned long previousMillis=0;
+int interval = 7000;
+String r1mac;
+char i='4' ;
+void setup() {
+    Serial.begin(9600);
+    pinMode(RxD, INPUT);
+    pinMode(TxD, OUTPUT);
+    mySerial.begin(9600);
+    r1mac = String();
+    pinMode(soilPower, OUTPUT);//Set D7 as an OUTPUT
+    digitalWrite(soilPower, LOW);//Set to LOW so no power is flowing through the sensor 
+}
+ 
+void loop() {
+    unsigned long currentMillis = millis();
+    while  (mySerial.available()) {                   //ฝั่งรับ    
+        char incoming  = mySerial.read();
+        SerialGET += incoming;
+        if(incoming == '\n'){
+          SerialGET.trim();             
+          if(SerialGET.substring(0,1) == "2" && SerialGET.substring(1,2) == "1") {
+            SerialGET.remove(0,2);
+            Serial.print("Get :");
+            Serial.println(SerialGET);
+            Serial.println("Active !!");
+          }
+SerialGET = "";
+        }
+        }
+    if (Serial.available()){
+        char incoming2 = Serial.read();
+        mySerial.print(incoming2);
+        
+        }
+        switch(i){
+          case '4' : 
+                     if ((unsigned long)(currentMillis - previousMillis) >= interval) {
+                     mySerial.print("13");
+                     mySerial.print('\n');
+                     
+                     i = '3';
+                     previousMillis = currentMillis;
+                     }
+                     break;
+                    
+          case '3' : 
+                     
+                     if ((unsigned long)(currentMillis - previousMillis) >= interval) {
+                     mySerial.print("12");
+                     mySerial.print('\n');
+                     
+                     i = '2';
+                     previousMillis = currentMillis;
+                     }
+                     break;
+                     
+          case '2' : 
+                   
+                     if ((unsigned long)(currentMillis - previousMillis) >= interval) {
+                     mySerial.print("14");
+                     mySerial.print('\n');
+                     
+                     i = '4';
+                     previousMillis = currentMillis;
+                     }
+                     break;}    
+
+}
+
+int readSoil()
+{
+    digitalWrite(soilPower, HIGH);//turn D7 "On"
+    delay(10);//wait 10 milliseconds 
+    val = analogRead(soilPin);//Read the SIG value form sensor 
+    digitalWrite(soilPower, LOW);//turn D7 "Off"
+    return val;//send current moisture value
+}
+
+void software_Reset() // Restarts program from beginning but does not reset the peripherals and registers
+{
+asm volatile ("  jmp 0");  
+} 
