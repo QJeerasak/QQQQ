@@ -28,6 +28,9 @@ void loop() {
           
           
     if  (mySerial.available()) {                   //ฝั่งรับ    
+        
+        
+        
         char incoming  = mySerial.read();
         SerialGET += incoming;
         if (incoming == '\n'){
@@ -38,7 +41,7 @@ void loop() {
             String sensor = "Soil Moisture = ";
             int soil = readSoil();
             r4mac = String(414 + sensor + soil);
-            delay(500);
+            delay(1000);
             mySerial.print(r4mac);
             mySerial.print('\n');
             
@@ -48,7 +51,7 @@ void loop() {
            if(SerialGET.substring(1,2) == "1") {}
               else {
               SerialGET.setCharAt(0,'4');     // ส่งข้อมูลไป -->
-              delay(500);
+              delay(1000);
               mySerial.print(SerialGET);
               mySerial.print('\n');
               
@@ -60,7 +63,7 @@ void loop() {
           if (SerialGET.substring(0,1) == "5"){   
             if(SerialGET.substring(1,2) == "1"){
               SerialGET.setCharAt(0,'4');     // ส่งข้อมูลกลับ <--
-              delay(500);
+              delay(1000);
               mySerial.print(SerialGET);
               mySerial.print('\n');
               
