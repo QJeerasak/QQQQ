@@ -9,9 +9,10 @@ int soilPin = A0;//Declare a variable for the soil moisture sensor
 int soilPower = 7;//Variable for Soil moisture Power
 String SerialGET = "";
 unsigned long previousMillis=0;
-int interval = 7000;
+int interval = 4000;
 String r1mac;
-char i='4' ;
+int i=4 ;
+bool a = true;
 void setup() {
     Serial.begin(9600);
     pinMode(RxD, INPUT);
@@ -24,16 +25,63 @@ void setup() {
  
 void loop() {
     unsigned long currentMillis = millis();
+    if(i<2){i=4;}
+    if(a){
+    switch(i){
+          case 4 :
+                  Serial.println("Send 14");
+                  delay(1000);
+                  mySerial.print("14");
+                  mySerial.print('\n');
+                  a = false;
+                  i--;
+                  break;  
+
+          case 3 :
+                  Serial.println("Send 13");
+                  delay(1000);
+                  mySerial.print("13");
+                  mySerial.print('\n');
+                  a = false;
+                  i--;
+                  break;  
+
+          case 2 :
+                  Serial.println("Send 12");
+                  delay(1000);
+                  mySerial.print("12");
+                  mySerial.print('\n');
+                  a = false;
+                  i--;
+                  break;
+          default :i=4;
+                   break;    
+    }
+               
+    }
+                     
+    
     while  (mySerial.available()) {                   //ฝั่งรับ    
         char incoming  = mySerial.read();
         SerialGET += incoming;
         if(incoming == '\n'){
+          
           SerialGET.trim();             
           if(SerialGET.substring(0,1) == "2" && SerialGET.substring(1,2) == "1") {
             SerialGET.remove(0,2);
             Serial.print("Get :");
             Serial.println(SerialGET);
             Serial.println("Active !!");
+            Serial.println("-----------------------");
+            Serial.println();
+            a = true;
+            for(int q=0;q<3;q++){
+            Serial.print('.');
+            delay(1000);  
+              }
+            Serial.println();  
+            
+            
           }
 SerialGET = "";
         }
@@ -43,38 +91,7 @@ SerialGET = "";
         mySerial.print(incoming2);
         
         }
-        switch(i){
-          case '4' : 
-                     if ((unsigned long)(currentMillis - previousMillis) >= interval) {
-                     mySerial.print("13");
-                     mySerial.print('\n');
-                     
-                     i = '3';
-                     previousMillis = currentMillis;
-                     }
-                     break;
-                    
-          case '3' : 
-                     
-                     if ((unsigned long)(currentMillis - previousMillis) >= interval) {
-                     mySerial.print("12");
-                     mySerial.print('\n');
-                     
-                     i = '2';
-                     previousMillis = currentMillis;
-                     }
-                     break;
-                     
-          case '2' : 
-                   
-                     if ((unsigned long)(currentMillis - previousMillis) >= interval) {
-                     mySerial.print("14");
-                     mySerial.print('\n');
-                     
-                     i = '4';
-                     previousMillis = currentMillis;
-                     }
-                     break;}    
+           
 
 }
 
