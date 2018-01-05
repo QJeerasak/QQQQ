@@ -1,15 +1,11 @@
 #include <SoftwareSerial.h>
 #define RxD 2
 #define TxD 3
-
 SoftwareSerial mySerial(RxD,TxD); // RX, TX
-
 int val = 0; //value for storing moisture value 
 int soilPin = A0;//Declare a variable for the soil moisture sensor 
 int soilPower = 7;//Variable for Soil moisture Power
 String SerialGET = "";
-unsigned long previousMillis=0;
-int interval = 4000;
 String r1mac;
 int i=2 ;
 bool a = true;
@@ -161,6 +157,7 @@ SerialGET = "";
         }
         }
 }
+
 int readSoil()
 {
     digitalWrite(soilPower, HIGH);//turn D7 "On"
@@ -169,6 +166,7 @@ int readSoil()
     digitalWrite(soilPower, LOW);//turn D7 "Off"
     return val;//send current moisture value
 }
+
 bool checking2(){
     bool Status_2 = false;
     delay(1000);
@@ -193,6 +191,7 @@ bool checking2(){
     }
    return Status_2;
   }
+  
 bool checking3(){
     bool Status_3 = false;
     delay(1000);
@@ -217,6 +216,7 @@ bool checking3(){
     }
    return Status_3;
   }
+  
 bool checking4(){
     bool Status_4 = false;
     delay(1000);
