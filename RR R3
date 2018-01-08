@@ -7,6 +7,9 @@ int soilPin = A0;//Declare a variable for the soil moisture sensor
 int soilPower = 7;//Variable for Soil moisture Power
 String SerialGET = "";
 String r3mac;
+bool Status3 = false;
+unsigned long previousMillis=0;
+float interval=60000;
 
 void setup() {
     Serial.begin(9600);
@@ -16,17 +19,22 @@ void setup() {
     r3mac = String();
     pinMode(soilPower, OUTPUT);//Set D7 as an OUTPUT
     digitalWrite(soilPower, LOW);//Set to LOW so no power is flowing through the sensor   
+    
 }
 
-void loop() {      
+void loop() { 
+  unsigned long currentMillis = millis();
+  if((unsigned long)(currentMillis - previousMillis) >= interval) {software_Reset(); }
     if  (mySerial.available()) {                   //ฝั่งรับ    
         char incoming  = mySerial.read();
         SerialGET += incoming;
         if (incoming == '\n'){
-          SerialGET.trim();             
+          SerialGET.trim();
           if(SerialGET.substring(0,1) == "2" && SerialGET.substring(1,2) == "3") {
-            Serial.print("Get :");
+            Serial.print("Get : ");
             Serial.println(SerialGET);
+            previousMillis = currentMillis; 
+            if(SerialGET.substring(2,3) == "1"){
             String sensor = "-";
             int soil = readSoil();
             r3mac = String(313 + sensor + soil);
@@ -35,15 +43,19 @@ void loop() {
             mySerial.print('\n');
             Serial.print("Send : ");
             Serial.println(r3mac);
-            Serial.println("-----------------------");
-          }else if (SerialGET.substring(0,1) == "2"){  
+            Serial.println("-----------------------");}
+            if(SerialGET.substring(2,3) == "2"){
+              Serial.println("Active !!");
+              Status3 = true;}
+          }else if (SerialGET.substring(0,1) == "2"){
+            previousMillis = currentMillis; 
            if(SerialGET.substring(1,2) == "1") {}
               else {
               SerialGET.setCharAt(0,'3');
               delay(1000);
               mySerial.print(SerialGET);
               mySerial.print('\n');
-              Serial.print("Forword :");
+              Serial.print("Forward : ");
               Serial.println(SerialGET);
               }
           }
@@ -53,8 +65,9 @@ void loop() {
               delay(1000);
               mySerial.print(SerialGET);
               mySerial.print('\n');
-              Serial.print("Forword :");
+              Serial.print("Backward : ");
               Serial.println(SerialGET);
+              Serial.println("-----------------------");
               }
             }
 SerialGET = "";
@@ -70,3 +83,7 @@ int readSoil()
     digitalWrite(soilPower, LOW);//turn D7 "Off"
     return val;//send current moisture value
 }
+void software_Reset() // Restarts program from beginning but does not reset the peripherals and registers
+{
+asm volatile ("  jmp 0");  
+}  
