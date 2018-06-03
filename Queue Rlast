@@ -1,0 +1,25 @@
+#include <SoftwareSerial.h>
+#define RxD 2
+#define TxD 3
+SoftwareSerial mySerial(RxD,TxD); // RX, TX
+String SerialGET = "";
+int i=1;
+void setup() {
+  Serial.begin(9600);
+  pinMode(RxD, INPUT);
+  pinMode(TxD, OUTPUT);
+  mySerial.begin(9600);
+}
+void loop() {
+  mySerial.print("4_");
+  mySerial.print("44");
+  mySerial.print("____");
+  mySerial.print(i);
+  mySerial.print('\n');
+  Serial.print("Sent : 4_44");
+  Serial.print("____");
+  Serial.print(i);
+  Serial.println();
+  delay(5000);                // 5s กำลังดี  4s ไม่เหมาะสม
+i++;
+}
