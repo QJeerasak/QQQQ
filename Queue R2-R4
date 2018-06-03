@@ -1,0 +1,30 @@
+#include <SoftwareSerial.h>
+#define RxD 2
+#define TxD 3
+SoftwareSerial mySerial(RxD,TxD); // RX, TX
+String SerialGET = "";
+void setup() {
+  Serial.begin(9600);
+  pinMode(RxD, INPUT);
+  pinMode(TxD, OUTPUT);
+  mySerial.begin(9600);
+}
+void loop() {
+  if  (mySerial.available()) {                   //ฝั่งรับ    
+        char incoming  = mySerial.read();
+        SerialGET += incoming;
+        if(incoming == '\n'){
+          if(SerialGET.substring(0,1) == "3"){   //เปลี่ยนเลข ตามโหนด
+            Serial.print("Get : ");
+            Serial.print(SerialGET);
+            delay(1000);
+            mySerial.print("2_");
+            mySerial.print("22");
+            mySerial.print(' ');
+            mySerial.print(SerialGET);
+            mySerial.print('\n');
+          }
+          SerialGET = "";
+        }
+        }
+}
