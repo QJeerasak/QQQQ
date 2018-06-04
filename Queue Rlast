@@ -13,8 +13,6 @@ void setup() {
 void loop() {
   mySerial.print("4_");
   mySerial.print("44");
-  mySerial.print("____");
-  mySerial.print(i);
   mySerial.print('\n');
   Serial.print("Sent : 4_44");
   Serial.print("____");
