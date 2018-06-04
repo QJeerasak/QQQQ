@@ -3,6 +3,10 @@
 #define TxD 3
 SoftwareSerial mySerial(RxD,TxD); // RX, TX
 String SerialGET = "";
+String GetToR3 = "";
+unsigned long previousMillis=0;
+float interval=5000;
+int i =1;
 void setup() {
   Serial.begin(9600);
   pinMode(RxD, INPUT);
@@ -10,21 +14,44 @@ void setup() {
   mySerial.begin(9600);
 }
 void loop() {
-  if  (mySerial.available()) {                   //ฝั่งรับ    
-        char incoming  = mySerial.read();
-        SerialGET += incoming;
-        if(incoming == '\n'){
-          if(SerialGET.substring(0,1) == "3"){   //เปลี่ยนเลข ตามโหนด
-            Serial.print("Get : ");
-            Serial.print(SerialGET);
-            delay(1000);
-            mySerial.print("2_");
-            mySerial.print("22");
-            mySerial.print(' ');
-            mySerial.print(SerialGET);
-            mySerial.print('\n');
-          }
-          SerialGET = "";
-        }
-        }
+  unsigned long currentMillis = millis();
+  if((unsigned long)(currentMillis - previousMillis) >= interval) {
+    mySerial.print("2_");
+    mySerial.print("22");
+    mySerial.print(' ');
+    mySerial.print(GetToR3);
+    mySerial.print('\n');
+    /*Serial.print("SENT : ");
+    Serial.print("2_");
+    Serial.print("22");
+    Serial.print(' ');
+    Serial.print(GetToR3);
+    Serial.println();*/
+    GetToR3 = "";
+    previousMillis = currentMillis;
+    }
+  if  (mySerial.available()) {  
+    char incoming  = mySerial.read();
+    SerialGET += incoming;
+    if(incoming == '\n'){
+      if(SerialGET.substring(0,1) == "3"){
+        SerialGET.trim();   
+        GetToR3 = SerialGET;
+        Serial.print("GET : ");
+        Serial.print(GetToR3);
+        Serial.print("____");
+        Serial.print(i);
+        Serial.println();
+        i++;
+      }
+      SerialGET = "";
+    }
+  }
+  
+
+}
+
+void software_Reset() // Restarts program from beginning but does not reset the peripherals and registers
+{
+asm volatile ("  jmp 0");  
 }
