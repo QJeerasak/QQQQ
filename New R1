@@ -61,10 +61,10 @@ void loop(){
     SerialGET += incoming;
     if(incoming == '\n'){
       if(SerialGET.substring(0,1) == "2"){
-        SerialGET.trim();   
-        GetToR2 = SerialGET.toFloat();
+        SerialGET.trim();
         Serial.print("GET : ");
         Serial.print(SerialGET);
+        cut();
         Serial.println();
         //sentfirebase();
       }
@@ -85,3 +85,33 @@ void sentfirebase()
   }
    firebase.close();            //ปิดการเชื่อมต่อกับ Firebase
 }
+void cut(){
+  if(SerialGET.substring(0,1) == "2"){
+  String count = SerialGET.substring(1,2);
+  int B = count.toInt();
+  SerialGET.remove(0,3);
+  String r2 = SerialGET.substring(0,B);
+  Serial.println(r2);
+  SerialGET.remove(0,B);
+  SerialGET.remove(0,1);
+  }
+  if(SerialGET.substring(0,1) == "3"){
+  String count = SerialGET.substring(1,2);
+  int B = count.toInt();
+  SerialGET.remove(0,3);
+  String r3 = SerialGET.substring(0,B);
+  Serial.println(r3);
+  SerialGET.remove(0,B);
+  SerialGET.remove(0,1);
+  }
+  if(SerialGET.substring(0,1) == "4"){
+  String count = SerialGET.substring(1,2);
+  int B = count.toInt();
+  SerialGET.remove(0,3);
+  String r4 = SerialGET.substring(0,B);
+  Serial.println(r4);
+  SerialGET.remove(0,B);
+  SerialGET.remove(0,1);
+  }
+  }
+  
