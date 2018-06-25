@@ -1,0 +1,87 @@
+#include "TEE_UC20.h"
+#include "SoftwareSerial.h"
+#include <AltSoftSerial.h>
+#include "internet.h"
+#include "firebase.h"
+#define RxD 2
+#define TxD 3
+SoftwareSerial mySerialZigbee(RxD,TxD); // RX, TX
+String SerialGET = "";
+float GetToR2 = 0;
+
+INTERNET net;
+FIREBASE firebase;
+#define APN "internet"
+#define USER ""
+#define PASS ""
+ 
+
+#define LED 10
+#define FIREBASE_URL      "qqqqjs-41ca8.firebaseio.com"
+#define FIREBASE_SECRET   "GYbtMnIJtOydr2xaKu0mGHl18nUxOfQdTsO6p6ex"
+unsigned long previousMillis = 0;
+const long interval = 2000; 
+ 
+AltSoftSerial mySerial3G;
+ 
+void debug(String data)
+{
+  Serial.println(data);
+}
+void setup() 
+{
+  pinMode(RxD, INPUT);
+  pinMode(TxD, OUTPUT);
+  mySerialZigbee.begin(9600);
+  pinMode(LED,OUTPUT);              //ให้ LED (Pin 10) เป็น Output
+  digitalWrite(LED,HIGH);           //สั่งให้จ่าย Logic High (LED ดับ)
+  Serial.begin(9600);               //เริ่มใช้งาน Serial
+  gsm.begin(&mySerial3G,9600);            //กำหนดช่องทาง Serial ที่ต่อกับ 3GShield
+  gsm.Event_debug = debug;          //กำหนด Function ที่ใช้แสดง Debug
+  Serial.println(F("UC20"));
+  gsm.PowerOn();                    //สั่งงานปิด และ เปิด 3G Module
+  while(gsm.WaitReady()){}          //รอจนกว่า 3G จะเชื่อมต่อกับเครือข่ายและพร้อมใช้งาน
+  Serial.print(F("GetOperator --> "));
+  Serial.println(gsm.GetOperator());    //แสดงชื่อเครือข่ายที่ใช้
+  Serial.print(F("SignalQuality --> "));
+  Serial.println(gsm.SignalQuality());  //แสดงความแรงของสัญญาณ
+  Serial.println(F("Disconnect net"));
+  net.DisConnect();
+  Serial.println(F("Set APN and Password"));
+  net.Configure(APN,USER,PASS);     //ตั้งค่า APN USER PASSWORD 
+  Serial.println(F("Connect net"));
+  net.Connect();                    //เชื่อมต่อ Internet
+  Serial.println(F("Show My IP"));
+  Serial.println(net.GetIP());      //แสดง IP
+  firebase.begin(FIREBASE_URL,FIREBASE_SECRET); //ตั้งค่า url และ secret ของ firebase database
+}
+void loop(){
+  if  (mySerialZigbee.available()) {  
+    char incoming  = mySerialZigbee.read();
+    SerialGET += incoming;
+    if(incoming == '\n'){
+      if(SerialGET.substring(0,1) == "2"){
+        SerialGET.trim();   
+        GetToR2 = SerialGET.toFloat();
+        Serial.print("GET : ");
+        Serial.print(SerialGET);
+        Serial.println();
+        //sentfirebase();
+      }
+      SerialGET = "";
+    }
+  }  
+}
+void sentfirebase() 
+{
+  int ret = firebase.connect(); //เชื่อมต่อกับ Firebase
+  if(ret==1)                //ถ้าหากเชื่อมต่อสำเร็จ
+  { 
+      Serial.print("Sent ");
+      Serial.print(GetToR2);
+      Serial.print(" To Firebase !!");
+      Serial.println();
+      firebase.setFloat("LED/Temp",GetToR2);       
+  }
+   firebase.close();            //ปิดการเชื่อมต่อกับ Firebase
+}
