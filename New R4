@@ -1,0 +1,42 @@
+#include <SoftwareSerial.h>
+#define RxD 2
+#define TxD 3
+SoftwareSerial mySerial(RxD,TxD); // RX, TX
+String SerialGET = "";
+int val = 0; //value for storing moisture value 
+int soilPin = A0;//Declare a variable for the soil moisture sensor 
+int soilPower = 7;//Variable for Soil moisture Power
+
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(RxD, INPUT);
+  pinMode(TxD, OUTPUT);
+  mySerial.begin(9600);
+  pinMode(soilPower, OUTPUT);//Set D7 as an OUTPUT
+  digitalWrite(soilPower, LOW);//Set to LOW so no power is flowing through the sensor
+}
+void loop() {
+  int soil = readSoil();
+  String convert = String(soil);
+  int count_convert = convert.length();
+  mySerial.print("4");
+  mySerial.print(count_convert);
+  mySerial.print("_");
+  mySerial.print(soil);
+  mySerial.print('\n');
+  Serial.print("Sent : " + soil);
+  for(int i=0;i<5;i++){
+    Serial.print(".");
+    }
+  Serial.println();
+  //delay(6000);                // 5s กำลังดี  4s ไม่เหมาะสม
+}
+int readSoil()
+{
+    digitalWrite(soilPower, HIGH);//turn D7 "On"
+    delay(10);//wait 10 milliseconds 
+    val = analogRead(soilPin);//Read the SIG value form sensor 
+    digitalWrite(soilPower, LOW);//turn D7 "Off"
+    return val;//send current moisture value
+}
