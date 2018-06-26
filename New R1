@@ -8,6 +8,10 @@
 SoftwareSerial mySerialZigbee(RxD,TxD); // RX, TX
 String SerialGET = "";
 float GetToR2 = 0;
+int soilPin = A0;
+int soilPower = 7;
+String r2,r3,r4;
+bool led1,led2,led3 ;
 
 INTERNET net;
 FIREBASE firebase;
@@ -30,6 +34,7 @@ void debug(String data)
 }
 void setup() 
 {
+  pinMode(soilPower, OUTPUT);
   pinMode(RxD, INPUT);
   pinMode(TxD, OUTPUT);
   mySerialZigbee.begin(9600);
@@ -64,34 +69,28 @@ void loop(){
         SerialGET.trim();
         Serial.print("GET : ");
         Serial.print(SerialGET);
-        cut();
         Serial.println();
-        //sentfirebase();
+        cutandsent();
+
       }
       SerialGET = "";
     }
-  }  
-}
-void sentfirebase() 
-{
-  int ret = firebase.connect(); //เชื่อมต่อกับ Firebase
-  if(ret==1)                //ถ้าหากเชื่อมต่อสำเร็จ
-  { 
-      Serial.print("Sent ");
-      Serial.print(GetToR2);
-      Serial.print(" To Firebase !!");
-      Serial.println();
-      firebase.setFloat("LED/Temp",GetToR2);       
   }
-   firebase.close();            //ปิดการเชื่อมต่อกับ Firebase
+  
 }
-void cut(){
+
+void cutandsent(){
+  int ret = firebase.connect(); //เชื่อมต่อกับ Firebase
+  if(ret==1) {               //ถ้าหากเชื่อมต่อสำเร็จ
+  Serial.println("Success !");
   if(SerialGET.substring(0,1) == "2"){
   String count = SerialGET.substring(1,2);
   int B = count.toInt();
   SerialGET.remove(0,3);
   String r2 = SerialGET.substring(0,B);
-  Serial.println(r2);
+ 
+  firebase.set("2/Farm",r2);     
+
   SerialGET.remove(0,B);
   SerialGET.remove(0,1);
   }
@@ -100,7 +99,9 @@ void cut(){
   int B = count.toInt();
   SerialGET.remove(0,3);
   String r3 = SerialGET.substring(0,B);
-  Serial.println(r3);
+  
+  firebase.set("3/Farm",r3);     
+
   SerialGET.remove(0,B);
   SerialGET.remove(0,1);
   }
@@ -109,9 +110,19 @@ void cut(){
   int B = count.toInt();
   SerialGET.remove(0,3);
   String r4 = SerialGET.substring(0,B);
-  Serial.println(r4);
+  
+  firebase.set("4/Farm",r4);     
+  
   SerialGET.remove(0,B);
   SerialGET.remove(0,1);
   }
+
+  int r1 = analogRead(soilPin);
+  firebase.setInt("1/Farm",r1);     
+  
+  firebase.close();            //ปิดการเชื่อมต่อกับ Firebase
+
   }
+  }
+  
   
