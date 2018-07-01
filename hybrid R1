@@ -1,0 +1,149 @@
+#include <SoftwareSerial.h>
+#define RxD 2
+#define TxD 3
+#define LED 13
+SoftwareSerial mySerial(RxD,TxD); // RX, TX
+int val = 0; //value for storing moisture value 
+int soilPin = A0;//Declare a variable for the soil moisture sensor 
+int soilPower = 7;//Variable for Soil moisture Power
+String SerialGET = "";
+String r1mac;
+bool a = true;
+bool Status_2 = true;
+bool Status_3 = true;
+bool Status_4 = true;
+bool Status_5 = true;
+int loss =0;
+char restart = '0';
+String GetDataApp ="";
+char ReadDataApp;
+
+void setup() {
+    digitalWrite(LED,LOW);
+    Serial.begin(9600);
+    pinMode(LED,OUTPUT);
+    pinMode(RxD, INPUT);
+    pinMode(TxD, OUTPUT);
+    mySerial.begin(9600);
+    r1mac = String();
+    pinMode(soilPower, OUTPUT);//Set D7 as an OUTPUT
+    digitalWrite(soilPower, LOW);//Set to LOW so no power is flowing through the sensor 
+}
+ 
+void loop() {
+    if(a){
+      App();
+      Serial.println("Send : 149");
+      delay(1000);
+      mySerial.print("149");
+      mySerial.print('\n');
+      a = false;
+      for(int q=0;q<7;q++){
+      Serial.print('.');
+      delay(1000);
+      }
+      Serial.println(); 
+         
+    }
+    while  (mySerial.available()) {                   //ฝั่งรับ    
+        char incoming  = mySerial.read();
+        SerialGET += incoming;
+        if(incoming == '\n'){
+          SerialGET.trim();             
+          if(SerialGET.substring(0,1) == "2" && SerialGET.substring(1,2) == "1") {
+            cutandsent();
+            Serial.print("Get : ");
+            Serial.println(SerialGET);
+            Serial.println("Active !!");
+            Serial.println("-----------------------");
+            Serial.println();
+            a = true;
+            for(int q=0;q<3;q++){
+            Serial.print('.');
+            delay(1000);  
+              }
+            Serial.println(); 
+          }
+SerialGET = "";
+        }
+        }
+}
+
+int readSoil()
+{
+    digitalWrite(soilPower, HIGH);//turn D7 "On"
+    delay(10);//wait 10 milliseconds 
+    val = analogRead(soilPin);//Read the SIG value form sensor 
+    digitalWrite(soilPower, LOW);//turn D7 "Off"
+    return val;//send current moisture value
+}
+
+void App(){
+  String Get1 = firebase.get("1/status");
+  String Get2 = firebase.get("2/status");
+  String Get3 = firebase.get("3/status");
+  String Get4 = firebase.get("4/status");
+  if(Get1 == "true"){
+    digitalWrite(LED,HIGH);}
+    else{
+      digitalWrite(LED,LOW);}
+  if(Get2 == "true"){
+    mySerial.print("122");
+    mySerial.print('\n');}
+    else{
+      mySerial.print("123");
+      mySerial.print('\n');}
+  if(Get3 == "true"){
+    mySerial.print("132");
+    mySerial.print('\n');}
+    else{
+      mySerial.print("133");
+      mySerial.print('\n');}
+  if(Get4 == "true"){
+    mySerial.print("142");
+    mySerial.print('\n');}
+    else{
+      mySerial.print("143");
+      mySerial.print('\n');}
+
+} 
+
+void cutandsent(){
+  if(SerialGET.substring(0,1) == "2"){
+  String count = SerialGET.substring(1,2);
+  int B = count.toInt();
+  SerialGET.remove(0,3);
+  String r2 = SerialGET.substring(0,B);
+ 
+  firebase.set("2/moisture",r2);     
+
+  SerialGET.remove(0,B);
+  SerialGET.remove(0,1);
+  }
+  if(SerialGET.substring(0,1) == "3"){
+  String count = SerialGET.substring(1,2);
+  int B = count.toInt();
+  SerialGET.remove(0,3);
+  String r3 = SerialGET.substring(0,B);
+  
+  firebase.set("3/moisture",r3);     
+
+  SerialGET.remove(0,B);
+  SerialGET.remove(0,1);
+  }
+  if(SerialGET.substring(0,1) == "4"){
+  String count = SerialGET.substring(1,2);
+  int B = count.toInt();
+  SerialGET.remove(0,3);
+  String r4 = SerialGET.substring(0,B);
+  
+  firebase.set("4/moisture",r4);     
+  
+  SerialGET.remove(0,B);
+  SerialGET.remove(0,1);
+  }
+
+  int r1 = analogRead(soilPin);
+  firebase.setInt("1/moisture",r1);     
+
+  }
