@@ -1,0 +1,221 @@
+#include <SoftwareSerial.h>
+#include "TEE_UC20.h"
+#include "internet.h"
+#include "firebase.h"
+#include <AltSoftSerial.h>
+#define RxD 2
+#define TxD 3
+SoftwareSerial mySerial(RxD,TxD); // RX, TX
+
+INTERNET net;
+FIREBASE firebase;
+#define APN "internet"
+#define USER ""
+#define PASS ""
+
+#define FIREBASE_URL      "app-project-d97a3.firebaseio.com"
+#define FIREBASE_SECRET   "y2zSZ717jH0wwZjgdmozwmxVuHmsxQnRn94QpFWv"
+
+AltSoftSerial mySerial3G;
+
+
+int val = 0; //value for storing moisture value 
+int soilPin = A0;//Declare a variable for the soil moisture sensor 
+int soilPower = 7;//Variable for Soil moisture Power
+String SerialGET = "";
+String r1mac;
+bool a = true;
+bool Status_2 = true;
+bool Status_3 = true;
+bool Status_4 = true;
+bool Status_5 = true;
+int loss =0;
+char restart = '0';
+String GetDataApp ="";
+char ReadDataApp;
+
+void debug(String data)
+{
+  Serial.println(data);
+}
+void setup() {
+    Serial.begin(9600);
+    pinMode(RxD, INPUT);
+    pinMode(TxD, OUTPUT);
+    mySerial.begin(9600);
+    r1mac = String();
+    pinMode(soilPower, OUTPUT);//Set D7 as an OUTPUT
+    digitalWrite(soilPower, LOW);//Set to LOW so no power is flowing through the sensor
+
+    gsm.begin(&mySerial3G,9600);            //กำหนดช่องทาง Serial ที่ต่อกับ 3GShield
+    gsm.Event_debug = debug;          //กำหนด Function ที่ใช้แสดง Debug
+    Serial.println(F("UC20"));
+    gsm.PowerOn();                    //สั่งงานปิด และ เปิด 3G Module
+    while(gsm.WaitReady()){}          //รอจนกว่า 3G จะเชื่อมต่อกับเครือข่ายและพร้อมใช้งาน
+    Serial.print(F("GetOperator --> "));
+    Serial.println(gsm.GetOperator());    //แสดงชื่อเครือข่ายที่ใช้
+    Serial.print(F("SignalQuality --> "));
+    Serial.println(gsm.SignalQuality());  //แสดงความแรงของสัญญาณ
+    Serial.println(F("Disconnect net"));
+    net.DisConnect();
+    Serial.println(F("Set APN and Password"));
+    net.Configure(APN,USER,PASS);     //ตั้งค่า APN USER PASSWORD 
+    Serial.println(F("Connect net"));
+    net.Connect();                    //เชื่อมต่อ Internet
+    Serial.println(F("Show My IP"));
+    Serial.println(net.GetIP());      //แสดง IP
+    firebase.begin(FIREBASE_URL,FIREBASE_SECRET); //ตั้งค่า url และ secret ของ firebase database
+}
+ 
+void loop() {
+    if(!Status_4){a = true;}
+    if(a){
+      App();
+                  Serial.println("Send : 141");
+                  delay(1000);
+                  mySerial.print("141");
+                  mySerial.print('\n');
+                  a = false;
+                  Status_4 =false;
+                  for(int q=0;q<7;q++){
+                  Serial.print('.');
+                  delay(1000);
+                  }
+                  Serial.println();   
+    }
+    while  (mySerial.available()) {                   //ฝั่งรับ 
+        char incoming  = mySerial.read();
+        Serial.print(incoming); 
+        SerialGET += incoming;
+        if(incoming == '\n'){
+          SerialGET.trim();             
+          if(SerialGET.substring(0,1) == "2" && SerialGET.substring(1,2) == "1") {
+            Serial.print("Get : ");
+            Serial.println(SerialGET);
+            cutandsent();
+            Serial.println("Active !!");
+            Serial.println("-----------------------");
+            Serial.println();
+            a = true;
+            for(int q=0;q<3;q++){
+            Serial.print('.');
+            delay(1000);  
+              }
+            Serial.println(); 
+          }
+SerialGET = "";
+        }
+        }
+        
+        
+}
+
+int readSoil()
+{
+    digitalWrite(soilPower, HIGH);//turn D7 "On"
+    delay(10);//wait 10 milliseconds 
+    val = analogRead(soilPin);//Read the SIG value form sensor 
+    digitalWrite(soilPower, LOW);//turn D7 "Off"
+    return val;//send current moisture value
+}
+
+void App(){
+  int ret = firebase.connect(); //เชื่อมต่อกับ Firebase
+  if(ret == 1){
+    Serial.print("Connect Firebase Complete");
+    for(int i=1 ; i<=1 ; i++){
+      delay(1000);
+      Serial.print('.');}
+    Serial.println();
+    
+    String status2 = firebase.get("2/status");
+    Serial.println(status2);
+    if(status2 == "true"){
+      status2 = "122";
+      }else{
+        status2 = "123";}
+    
+    String status3 = firebase.get("3/status");
+    Serial.println(status3);
+    if(status3 == "true"){
+      status3 = "232";
+      }else{
+        status3 = "233";}
+    
+    String status4 = firebase.get("4/status");
+    Serial.println(status4);
+    if(status4 == "true"){
+      status4 = "342";
+      }else{
+        status4 = "343";}
+    for(int i=1 ; i<=3 ; i++){
+      delay(500);
+      Serial.print('.');}
+    Serial.println();
+    
+    firebase.close();            //ปิดการเชื่อมต่อกับ Firebase
+    mySerial.print(status2);
+    mySerial.print(status3);
+    mySerial.print(status4);
+    mySerial.print('\n');
+    Serial.print(status2 + ' ' + status3 + ' ' + status4);
+    for(int i=1 ; i<=4 ; i++){
+      delay(1000);
+      Serial.print('.');}
+    Serial.println();
+    Serial.println("-----------------------");
+    
+    }else{
+      Serial.println("Connect Firebase Fail !!");}
+  }
+  
+void cutandsent(){
+  int ret = firebase.connect(); //เชื่อมต่อกับ Firebase
+    if(ret == 1){
+      Serial.print("Connect Firebase Complete");
+      for(int i=1;i<=2;i++){
+        delay(500);
+        Serial.print('.');}
+        Serial.println();
+      if(SerialGET.substring(0,2) == "21"){
+      String count = SerialGET.substring(2,3);
+      int B = count.toInt();
+      SerialGET.remove(0,3);
+      String r2 = SerialGET.substring(0,B);
+      Serial.println(r2);
+      firebase.set("2/moisture",r2);     
+    
+      SerialGET.remove(0,B);
+      }
+      for(int i=1;i<=2;i++){
+        delay(500);
+        Serial.print('.');}
+        Serial.println();
+      if(SerialGET.substring(0,2) == "31"){
+      String count = SerialGET.substring(2,3);
+      int B = count.toInt();
+      SerialGET.remove(0,3);
+      String r3 = SerialGET.substring(0,B);
+      Serial.println(r3);
+      firebase.set("3/moisture",r3);     
+    
+      SerialGET.remove(0,B);
+      }
+      for(int i=1;i<=2;i++){
+        delay(500);
+        Serial.print('.');}
+        Serial.println();
+      if(SerialGET.substring(0,2) == "41"){
+      String count = SerialGET.substring(2,3);
+      int B = count.toInt();
+      SerialGET.remove(0,3);
+      String r4 = SerialGET.substring(0,B);
+      Serial.println(r4);
+      firebase.set("4/moisture",r4);     
+      
+      SerialGET.remove(0,B);
+      }
+      firebase.close();            //ปิดการเชื่อมต่อกับ Firebase
+      }else{
+        Serial.println("Connect Firebase Fail !!");}
+  }
