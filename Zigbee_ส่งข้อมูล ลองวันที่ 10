@@ -1,0 +1,38 @@
+#include <SoftwareSerial.h>
+#define RxD 2
+#define TxD 3
+SoftwareSerial mySerial(RxD,TxD); // RX, TX
+
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x3F, 16, 2);
+
+String SerialGET = "";
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(RxD, INPUT);
+  pinMode(TxD, OUTPUT);
+  mySerial.begin(9600);
+  lcd.begin();
+
+}
+
+void loop() {
+  if(mySerial.available()) {                   //ฝั่งรับ    
+        char incoming  = mySerial.read();
+        SerialGET += incoming;
+        if(incoming == '\n'){
+          SerialGET.trim();
+          lcd.clear();
+          lcd.print(SerialGET);
+          Serial.println(SerialGET);
+          SerialGET = "";}
+  }
+
+        if(Serial.available()) {                   //ฝั่งส่ง    
+        char incoming2  = Serial.read();
+        mySerial.print(incoming2);}
+        
+
+
+}
