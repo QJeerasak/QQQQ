@@ -1,0 +1,65 @@
+#include <SoftwareSerial.h>
+#define RxD 2
+#define TxD 3
+#define LED 13
+SoftwareSerial mySerial(RxD,TxD); // RX, TX
+int val = 0; //value for storing moisture value 
+int soilPin = A0;//Declare a variable for the soil moisture sensor 
+int soilPower = 7;//Variable for Soil moisture Power
+String SerialGET = "";
+String r2mac;
+bool Status2 = false;
+unsigned long previousMillis=0;
+float interval=60000;
+
+void setup() {
+    Serial.begin(9600);
+    pinMode(LED, OUTPUT);
+    pinMode(RxD, INPUT);
+    pinMode(TxD, OUTPUT);
+    mySerial.begin(9600);
+    r2mac = String();
+    pinMode(soilPower, OUTPUT);//Set D7 as an OUTPUT
+    digitalWrite(soilPower, LOW);//Set to LOW so no power is flowing through the sensor
+    digitalWrite(LED, LOW);
+}
+ 
+void loop() {
+  unsigned long currentMillis = millis();
+  if((unsigned long)(currentMillis - previousMillis) >= interval) {
+              previousMillis = currentMillis; 
+              int soil = readSoil();
+              String convert = String(soil);
+              int count_convert = convert.length();
+              mySerial.print("2");
+              mySerial.print(count_convert);
+              mySerial.print(soil);
+              mySerial.print('\n');
+              
+              }
+     if(mySerial.available()) {                   //ฝั่งรับ    
+        char incoming  = mySerial.read();
+        SerialGET += incoming;
+        if(incoming == '\n'){
+          SerialGET.trim();
+            if(SerialGET.substring(0,1) == "1"){
+              digitalWrite(LED, HIGH);
+              Serial.println("Trun On LED");
+              }else if(SerialGET.substring(0,1) == "0"){
+              digitalWrite(LED, LOW);
+              Serial.println("Trun Off LED");
+              }
+     SerialGET = "";
+        }
+        }
+}
+
+int readSoil()
+{
+    digitalWrite(soilPower, HIGH);//turn D7 "On"
+    delay(10);//wait 10 milliseconds 
+    val = analogRead(soilPin);//Read the SIG value form sensor 
+    digitalWrite(soilPower, LOW);//turn D7 "Off"
+    return val;//send current moisture value
+}
+ 
