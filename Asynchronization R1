@@ -1,0 +1,321 @@
+// เรียก library ที่ต้องใช้
+#include <SoftwareSerial.h>
+#include "TEE_UC20.h"
+#include "internet.h"
+#include "firebase.h"
+#include <AltSoftSerial.h>
+
+// ตั้งขารับขาส่งของ zigbee
+#define RxD 2
+#define TxD 3
+SoftwareSerial mySerial(RxD,TxD); // RX, TX
+
+// คำสั่งการเชื่อมต่อ internet และ firebase
+INTERNET net;
+FIREBASE firebase;
+#define APN "internet"
+#define USER ""
+#define PASS ""
+#define FIREBASE_URL      "app-project-d97a3.firebaseio.com"
+#define FIREBASE_SECRET   "y2zSZ717jH0wwZjgdmozwmxVuHmsxQnRn94QpFWv"
+AltSoftSerial mySerial3G;
+
+// กำหนดตัวแปรที่เกี่ยวข้องกับการทำงาน
+int val = 0; //value for storing moisture value 
+int soilPin = A1;//Declare a variable for the soil moisture sensor 
+int soilPower = 10;//Variable for Soil moisture Power
+int loss3,loss4 = 0;
+int sensor=2;
+String SerialGET = "";
+String r1mac;
+String r2_1,r2_2,r3_1,r3_2,r4_1,r4_2;
+String R1_1 = "";
+String R1_2 = "";
+String R2_1 = "";
+String R2_2 = "";
+String R3_1 = "";
+String R3_2 = "";
+String R4_1 = "";
+String R4_2 = "";
+String active1 = "true";
+String active2 = "true";
+String active3 = "true";
+String active4 = "true";
+unsigned long previousMillis1 = 0;
+unsigned long previousMillis2 = 0;
+float interval=300000; //5นาที
+#define LED 13
+
+void debug(String data)
+{
+  Serial.println(data);
+}
+void setup() {
+    Serial.begin(9600);
+    pinMode(RxD, INPUT);
+    pinMode(TxD, OUTPUT);
+    pinMode(LED, OUTPUT);
+    mySerial.begin(9600);
+    r1mac = String();
+    pinMode(soilPower, OUTPUT);//Set D7 as an OUTPUT
+    digitalWrite(soilPower, LOW);//Set to LOW so no power is flowing through the sensor
+    digitalWrite(LED, LOW);
+    gsm.begin(&mySerial3G,9600); //กำหนดช่องทาง Serial ที่ต่อกับ 3GShield
+    gsm.Event_debug = debug;     //กำหนด Function ที่ใช้แสดง Debug   
+}
+ 
+void loop() {
+  unsigned long currentMillis = millis();
+  int ret = firebase.connect();                       // เชื่อมต่อกับ firebase (ถ้าเชื่อมต่อสำเร็จจะให้ค่าเป็น ture หรือ 1)
+  if(ret == 1){
+  App();                                              
+  delay(500);
+    while  (mySerial.available()) {                   // เมื่อมีข้อมูลส่งมา จะเข้าลูปการทำงาน
+        char incoming  = mySerial.read();
+        SerialGET += incoming;
+        if(incoming == '\n'){
+          SerialGET.trim();
+            if(SerialGET.substring(0,2) == "02"){
+            Serial.print("Get : ");
+            Serial.println(SerialGET);
+            loss3++;
+            loss4++;
+            previousMillis1 = currentMillis; 
+            previousMillis2 = currentMillis;
+            if(sensor == 1){
+            active2 = "true";
+            SerialGET.remove(0,2);
+            String count = SerialGET.substring(0,1);
+            int B = count.toInt();
+            SerialGET.remove(0,1);
+            String r2_1 = SerialGET.substring(0,B);
+            R2_1=r2_1;
+            SerialGET.remove(0,B);
+            
+            if(SerialGET.substring(0,2) == ".3"){
+            loss3=0;
+            active3 = "true";
+            SerialGET.remove(0,2);
+            String count = SerialGET.substring(0,1);
+            int B = count.toInt();
+            SerialGET.remove(0,1);
+            String r3_1 = SerialGET.substring(0,B);
+            R3_1=r3_1;
+            SerialGET.remove(0,B);
+            }
+
+            if(SerialGET.substring(0,2) == ".4"){
+            loss4=0;
+            active4 = "true";
+            SerialGET.remove(0,2);
+            String count = SerialGET.substring(0,1);
+            int B = count.toInt();
+            SerialGET.remove(0,1);
+            String r4_1 = SerialGET.substring(0,B);
+            R4_1=r4_1;
+            }
+            }
+
+            if(sensor == 2){
+            active2 = "true";
+            SerialGET.remove(0,2);
+            String count = SerialGET.substring(0,1);
+            int B = count.toInt();
+            SerialGET.remove(0,1);
+            String r2_1 = SerialGET.substring(0,B);
+            R2_1=r2_1;
+            SerialGET.remove(0,B);
+            // sensor2.2
+            count = SerialGET.substring(0,1);
+            B = count.toInt();
+            SerialGET.remove(0,1);
+            String r2_2 = SerialGET.substring(0,B);
+            R2_2=r2_2;
+            SerialGET.remove(0,B);
+            //
+            
+            if(SerialGET.substring(0,2) == ".3"){
+            loss3=0;
+            active3 = "true";
+            SerialGET.remove(0,2);
+            String count = SerialGET.substring(0,1);
+            int B = count.toInt();
+            SerialGET.remove(0,1);
+            String r3_1 = SerialGET.substring(0,B);
+            R3_1=r3_1;
+            SerialGET.remove(0,B);
+            // sensor3.2
+            count = SerialGET.substring(0,1);
+            B = count.toInt();
+            SerialGET.remove(0,1);
+            String r3_2 = SerialGET.substring(0,B);
+            R3_2=r3_2;
+            SerialGET.remove(0,B);
+            //
+              }
+
+            if(SerialGET.substring(0,2) == ".4"){
+            loss4=0;
+            active4 = "true";
+            SerialGET.remove(0,2);
+            String count = SerialGET.substring(0,1);
+            int B = count.toInt();
+            SerialGET.remove(0,1);
+            String r4_1 = SerialGET.substring(0,B);
+            R4_1=r4_1;
+            SerialGET.remove(0,B);
+            // sensor4.2
+            count = SerialGET.substring(0,1);
+            B = count.toInt();
+            SerialGET.remove(0,1);
+            String r4_2 = SerialGET.substring(0,B);
+            R4_2=r4_2;
+            SerialGET.remove(0,B);
+            //
+            }
+            }
+              delay(500);
+              if(loss3 == 3){active3 = "false";}
+              if(loss4 == 3){active4 = "false";}
+              sent();
+              }
+                   
+SerialGET = "";
+        }
+        }
+if(active3 == "false"){firebase.set("3/status","false");}
+if(active4 == "false"){firebase.set("4/status","false");}
+if((unsigned long)(currentMillis - previousMillis1) >= interval){
+          firebase.set("2/active","false");
+          firebase.set("3/active","false");
+          firebase.set("4/active","false");
+          firebase.set("2/status","false");
+          firebase.set("3/status","false");
+          firebase.set("4/status","false");
+          previousMillis1 = currentMillis; 
+          }
+if((unsigned long)(currentMillis - previousMillis2) >= 70000){ 
+        int soil = readSoil();
+        R1_1 = String(soil);
+        int temp = Thermister(analogRead(0));
+        R1_2 = String(temp);
+        firebase.set("1/moisture",R1_1);
+        firebase.set("1/moisture1",R1_2);
+        previousMillis2 = currentMillis;     
+}
+
+  Serial.println("---------");
+  delay(500);   
+  
+firebase.close();    
+}
+else{
+    Serial.println(F("UC20"));
+    gsm.PowerOn();
+    while(gsm.WaitReady()){}          //รอจนกว่า 3G จะเชื่อมต่อกับเครือข่ายและพร้อมใช้งาน
+    Serial.print(F("GetOperator --> "));
+    Serial.println(gsm.GetOperator());    //แสดงชื่อเครือข่ายที่ใช้
+    Serial.print(F("SignalQuality --> "));
+    Serial.println(gsm.SignalQuality());  //แสดงความแรงของสัญญาณ
+    Serial.println(F("Disconnect net"));
+    net.DisConnect();
+    Serial.println(F("Set APN and Password"));
+    net.Configure(APN,USER,PASS);     //ตั้งค่า APN USER PASSWORD 
+    Serial.println(F("Connect net"));
+    net.Connect();                    //เชื่อมต่อ Internet
+    Serial.println(F("Show My IP"));
+    Serial.println(net.GetIP());      //แสดง IP
+    firebase.begin(FIREBASE_URL,FIREBASE_SECRET); //ตั้งค่า url และ secret ของ firebase database
+    
+    }
+}
+
+int readSoil()
+{
+    digitalWrite(soilPower, HIGH);//turn D7 "On"
+    delay(10);//wait 10 milliseconds 
+    val = analogRead(soilPin);//Read the SIG value form sensor 
+    digitalWrite(soilPower, LOW);//turn D7 "Off"
+    return val;//send current moisture value
+}
+
+void App(){
+    String status1 = firebase.get("1/status");
+    String status2 = firebase.get("2/status");
+    String status3 = firebase.get("3/status");
+    String status4 = firebase.get("4/status");
+    Serial.println(status1);
+    Serial.println(status2);
+    Serial.println(status3);
+    Serial.println(status4);
+    if(status1 == "true"){digitalWrite(LED, HIGH);}
+    else{digitalWrite(LED, LOW);}
+    delay(50);
+
+    if(status2 == "true"){status2 = "1";}
+    else{status2 = "0";}
+    delay(50);
+
+    if(status3 == "true"){status3 = "1";}
+    else{status3 = "0";}
+    delay(50);
+    
+    if(status4 == "true"){status4 = "1";}
+    else{status4 = "0";}
+    
+    mySerial.print("1");
+    mySerial.print(status2);
+    mySerial.print(status3);
+    mySerial.print(status4);
+    mySerial.print('\n');
+  }
+  
+void sent(){
+      int soil = readSoil();
+      R1_1 = String(soil);
+      int temp = Thermister(analogRead(0));
+      R1_2 = String(temp);
+      if(sensor == 1){
+      Serial.println(R1_1);
+      firebase.set("1/moisture",R1_1);
+      Serial.println(R2_1);
+      firebase.set("2/moisture",R2_1);
+      firebase.set("2/active",active2); 
+      Serial.println(R3_1);
+      firebase.set("3/moisture",R3_1);
+      firebase.set("3/active",active3);
+      Serial.println(R4_1);
+      firebase.set("4/moisture",R4_1);
+      firebase.set("4/active",active4);
+        }
+
+        if(sensor == 2){
+      Serial.println(R1_1);
+      Serial.println(R1_2);
+      firebase.set("1/moisture",R1_1);
+      firebase.set("1/moisture1",R1_2);
+      Serial.println(R2_1);
+      Serial.println(R2_2);
+      firebase.set("2/moisture",R2_1);
+      firebase.set("2/moisture1",R2_2);
+      firebase.set("2/active",active2); 
+      Serial.println(R3_1);
+      Serial.println(R3_2);
+      firebase.set("3/moisture",R3_1);
+      firebase.set("3/moisture1",R3_2);
+      firebase.set("3/active",active3);
+      Serial.println(R4_1);
+      Serial.println(R4_2);
+      firebase.set("4/moisture",R4_1);
+      firebase.set("4/moisture1",R4_2);
+      firebase.set("4/active",active4);
+        }           
+}
+
+double Thermister(int RawADC) {
+  double Temp;
+  Temp = log(((10240000/RawADC) - 10000));
+  Temp = 1 / (0.001129148 + (0.000234125 + (0.0000000876741 * Temp * Temp ))* Temp );
+  Temp = Temp - 273.15; // Convert Kelvin to Celcius
+  return Temp;
+}
