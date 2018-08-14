@@ -1,0 +1,221 @@
+#include <SoftwareSerial.h>
+#include "TEE_UC20.h"
+#include "internet.h"
+#include "firebase.h"
+#define RxD 2
+#define TxD 3
+#define LED 13
+SoftwareSerial mySerial(RxD,TxD); // RX, TX
+
+INTERNET net;
+FIREBASE firebase;
+#define APN "internet"
+#define USER ""
+#define PASS ""
+
+#define FIREBASE_URL      "app-project-d97a3.firebaseio.com"
+#define FIREBASE_SECRET   "y2zSZ717jH0wwZjgdmozwmxVuHmsxQnRn94QpFWv"
+
+AltSoftSerial mySerial3G;
+
+unsigned long previousMillis=0;
+float interval=60000;
+int val = 0; //value for storing moisture value 
+int soilPin = A1;//Declare a variable for the soil moisture sensor 
+int soilPower = 10;//Variable for Soil moisture Power
+String SerialGET = "";
+String r1mac;
+int i=1 ;
+bool a = true;
+String r2_1,r2_2,r2_3,r3_1,r3_2,r3_3,r4_1,r4_2,r4_3;
+String R1_1 = "";
+String active2 = "true";
+String active3 = "true";
+String active4 = "true";
+String status_2,status_3,status_4;
+int loss = 0;
+
+void debug(String data)
+{
+  Serial.println(data);
+}
+
+void setup() {
+    Serial.begin(9600);
+    pinMode(RxD, INPUT);
+    pinMode(TxD, OUTPUT);
+    pinMode(LED, OUTPUT);
+    mySerial.begin(9600);
+    pinMode(soilPower, OUTPUT);//Set D7 as an OUTPUT
+    digitalWrite(LED, LOW);
+    digitalWrite(soilPower, LOW);//Set to LOW so no power is flowing through the sensor 
+    gsm.begin(&mySerial3G,9600);            //กำหนดช่องทาง Serial ที่ต่อกับ 3GShield
+    gsm.Event_debug = debug;          //กำหนด Function ที่ใช้แสดง Debug
+}
+ 
+void loop() {
+  unsigned long currentMillis = millis();
+  int ret = firebase.connect();
+    if(ret == 1){
+      if(i>4){i=1;}
+      if(!a){
+      if(i==2){a = true; loss++;}
+      if(i==3){a = true; loss++;}
+      if(i==4){a = true; loss++;}
+      }
+
+      if(i==1){
+      String status1 = firebase.get("1/status");
+      if(status1 == "true"){digitalWrite(LED, HIGH);}
+      if(status1 == "false"){digitalWrite(LED, LOW);}
+      int soil = readSoil();
+      R1_1 = String(soil);
+      firebase.set("1/moisture",R1_1);
+      i++;
+      delay(500);
+      }
+      if(i==2 && a){
+        Serial.print("Node 2 = ");
+        String status2 = firebase.get("2/status");
+        active2 = "false";
+        Serial.println(status2);
+        delay(100);
+        if(status2 == "true"){status2 = "122";}
+        if(status2 == "false"){status2 = "120";}
+        mySerial.print(status2);
+        mySerial.print('\n');
+        for(int q=0;q<2;q++){
+        delay(500);
+        }
+}
+
+      if(i==3 && a){
+        Serial.print("Node 3 = ");
+        String status3 = firebase.get("3/status");
+        active2 = "false";
+        Serial.println(status3);
+        delay(100);
+        if(status3 == "true"){status3 = "132";}
+        if(status3 == "false"){status3 = "130";}
+        mySerial.print(status3);
+        mySerial.print('\n');
+        for(int q=0;q<4;q++){
+        delay(500);
+        }
+       
+  }
+
+      if(i==4 && a){
+        Serial.print("Node 4 = ");
+        String status4 = firebase.get("4/status");
+        active2 = "false";
+        Serial.println(status4);
+        delay(100);
+        if(status4 == "true"){status4 = "142";}
+        if(status4 == "false"){status4 = "140";}
+        mySerial.print(status4);
+        mySerial.print('\n');
+        for(int q=0;q<7;q++){
+        delay(500);
+        }
+}
+              
+    a = false;
+    while  (mySerial.available()) {                   //ฝั่งรับ    
+        char incoming  = mySerial.read();
+        SerialGET += incoming;
+        if(incoming == '\n'){
+          SerialGET.trim();             
+if(SerialGET.substring(0,1) == "2" && SerialGET.substring(1,2) == "1") {
+            previousMillis = currentMillis;  
+            loss = 0;
+            SerialGET.remove(0,2);
+            Serial.print("Get : ");
+            Serial.println(SerialGET);
+            
+            delay(500);  
+            sent();
+            i++;
+            a = true;
+            for(int q=0;q<3;q++){
+            Serial.print('.');
+            delay(1000);
+            previousMillis = currentMillis;    
+              }
+            Serial.println(); 
+          }
+SerialGET = "";
+        }
+        }
+        if(loss == 3){
+            active2 = "false";
+            active3 = "false";
+            active4 = "false";
+            status_2 = "false";
+            status_3 = "false";
+            status_4 = "false";
+            firebase.set("2/active",active2);
+            firebase.set("3/active",active3);
+            firebase.set("4/active",active4);
+            firebase.set("2/status",status_2);
+            firebase.set("3/status",status_3);
+            firebase.set("4/status",status_4);
+            loss = 0;
+          }
+if((unsigned long)(currentMillis - previousMillis) >= interval){
+      int soil = readSoil();
+      R1_1 = String(soil);
+      firebase.set("1/moisture",R1_1);
+      previousMillis = currentMillis;  
+  }
+          
+firebase.close();
+delay(500);
+    }
+    else{
+    Serial.println(F("UC20"));
+    gsm.PowerOn();
+    while(gsm.WaitReady()){}          //รอจนกว่า 3G จะเชื่อมต่อกับเครือข่ายและพร้อมใช้งาน
+    Serial.print(F("GetOperator --> "));
+    Serial.println(gsm.GetOperator());    //แสดงชื่อเครือข่ายที่ใช้
+    Serial.print(F("SignalQuality --> "));
+    Serial.println(gsm.SignalQuality());  //แสดงความแรงของสัญญาณ
+    Serial.println(F("Disconnect net"));
+    net.DisConnect();
+    Serial.println(F("Set APN and Password"));
+    net.Configure(APN,USER,PASS);     //ตั้งค่า APN USER PASSWORD 
+    Serial.println(F("Connect net"));
+    net.Connect();                    //เชื่อมต่อ Internet
+    Serial.println(F("Show My IP"));
+    Serial.println(net.GetIP());      //แสดง IP
+    firebase.begin(FIREBASE_URL,FIREBASE_SECRET); //ตั้งค่า url และ secret ของ firebase database
+    
+    }
+}
+
+int readSoil()
+{
+    digitalWrite(soilPower, HIGH);//turn D7 "On"
+    delay(10);//wait 10 milliseconds 
+    val = analogRead(soilPin);//Read the SIG value form sensor 
+    digitalWrite(soilPower, LOW);//turn D7 "Off"
+    return val;//send current moisture value
+}
+
+  void sent(){
+    if(i == 2){
+      active2 = "true";
+      firebase.set("2/moisture",SerialGET);
+      firebase.set("2/active",active2);
+      }
+      if(i == 3){
+        active3 = "true";
+      firebase.set("3/moisture",SerialGET);
+      firebase.set("3/active",active3);
+      }
+      if(i == 4){
+        active4 = "true";
+      firebase.set("4/moisture",SerialGET);
+      firebase.set("4/active",active4);
+      }    
+}
